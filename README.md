@@ -322,24 +322,31 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 
 <br>
 
-7. Get Notifications
+### WebSockets
+WebSockets are used to deliver real-time notifications to users about important events on the platform. These notifications include:
 
-- Endpoint: /competitions/notifications
-- Method: GET
-- Headers: ``JWT Token``
+- Likes on their submission.
+- Comments on their submission.
+- Replies to their comments.
+- Competition results (their ranking when a competition ends).
 
-- Response (JSON):
+**How Does It Work:** <br>
+A WebSocket connection is established between the client (browser or app) and the Competition Service when the user logs (already has some submissions) or when the user submits something to a competition. When a significant event occurs (e.g., a like or comment on a submission), the server sends a real-time notification through the open WebSocket connection to notify the user.
+
+1. User A likes User B’s submission via a POST request.
+2. The server processes the like and updates the database.
+3. The server sends a WebSocket notification to User B: “Your submission received a like!”
+4. User B instantly receives the notification in their browser or app through the WebSocket.
+
 ```json
-[
-  {
-    "notification_id": "string",
-    "message": "string",
-    "read": "boolean",
-    "created_at": "timestamp"
-  }
-]
+{
+  "type": "notification",
+  "message": "Your submission has received a new like!",
+  "submission_id": "string",
+  "timestamp": "date"
+}
 ```
-- JWT Required: Yes
+The WebSocket will be closed when the user is logged out.
 
 <br>
 
