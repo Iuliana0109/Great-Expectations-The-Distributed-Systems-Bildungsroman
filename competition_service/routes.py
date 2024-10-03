@@ -1,23 +1,37 @@
 from flask import Blueprint, request, jsonify
 from models import db, Competition
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from datetime import datetime
 
 bp = Blueprint('competition', __name__)
 
+# Test database connection
+@bp.route('/test-db', methods=['GET'])
+def test_db():
+    try:
+        db.create_all()  # This will create the tables if they do not exist
+        return jsonify({'message': 'Database connection is successful'}), 200
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
 # Create a new competition
 @bp.route('/competitions', methods=['POST'])
-@jwt_required()
+# @jwt_required()
 def create_competition():
     try:
         data = request.json
         if not data.get('title') or not data.get('description') or not data.get('start_date') or not data.get('end_date'):
             return jsonify({'message': 'Missing required fields'}), 400
 
+        # Convert date strings to datetime objects
+        start_date = datetime.fromisoformat(data['start_date'])
+        end_date = datetime.fromisoformat(data['end_date'])
+
         new_competition = Competition(
             title=data['title'],
             description=data['description'],
-            start_date=data['start_date'],
-            end_date=data['end_date']
+            start_date=start_date,
+            end_date=end_date
         )
         db.session.add(new_competition)
         db.session.commit()
@@ -62,7 +76,7 @@ def get_competition(competition_id):
 
 # Delete a competition
 @bp.route('/competitions/<int:competition_id>', methods=['DELETE'])
-@jwt_required()
+# @jwt_required()
 def delete_competition(competition_id):
     try:
         competition = Competition.query.get(competition_id)

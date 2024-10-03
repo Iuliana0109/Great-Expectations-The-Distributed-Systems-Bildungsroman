@@ -15,7 +15,7 @@ services:
     ports:
       - "5001:5001" 
     environment:
-      - DATABASE_URL=postgresql://user:password@postgres/CompetitionService
+      - DATABASE_URL=postgresql://user:password@postgres/competitionservice
       - SECRET_KEY=supersecretkey123
     depends_on:
       - postgres
@@ -25,12 +25,12 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: UserManagement  # DB for user management service
-      POSTGRES_DB_COMPETITION: CompetitionService # DB for user competition service
+      POSTGRES_DB: UserManagement  # Default DB for user management service
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init/init_db.sh:/docker-entrypoint-initdb.d/init_db.sh  # Initialize additional database
 
   gateway:
     build: ./gateway
