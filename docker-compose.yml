@@ -1,0 +1,44 @@
+version: '3'
+services:
+  user-management:
+    build: ./user_management_service
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres/UserManagement
+      - SECRET_KEY=supersecretkey123
+    depends_on:
+      - postgres
+
+  competition-service:
+    build: ./competition_service 
+    ports:
+      - "5001:5001" 
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres/CompetitionService
+      - SECRET_KEY=supersecretkey123
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: UserManagement  # DB for user management service
+      POSTGRES_DB_COMPETITION: CompetitionService # DB for user competition service
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - user-management
+      - competition-service
+
+volumes:
+  postgres_data:
