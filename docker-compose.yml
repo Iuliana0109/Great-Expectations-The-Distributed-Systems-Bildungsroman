@@ -9,11 +9,15 @@ services:
     container_name: competition_service
     depends_on:
       - postgres_competition
+      - user_management_service
     links:
       - postgres_competition
+      - user_management_service
 
   user_management_service:
-    build: ./user_management_service
+    build:
+      context: ./user_management_service
+      dockerfile: Dockerfile 
     ports:
       - "5000:5000"
     env_file:
@@ -23,6 +27,20 @@ services:
       - postgres_user_management
     links:
       - postgres_user_management
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+
+  websocket_server:
+    build: ./websocket_server
+    container_name: websocket
+    ports:
+      - "6789:6789"
+   
+    depends_on:
+      - redis
 
   postgres_user_management:
     image: postgres:13

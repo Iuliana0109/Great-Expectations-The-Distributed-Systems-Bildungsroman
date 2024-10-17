@@ -1,10 +1,11 @@
+import asyncio
+import websockets
 import requests
 from flask import Blueprint, request, jsonify
-from app import db, socketio
+from app import db
 from models import Competition, Submission, Like, Comment
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from flask_socketio import emit
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_socketio import emit, join_room
 import datetime
 import json
 
@@ -119,6 +120,24 @@ def submit_entry(id):
     try:
         db.session.add(new_submission)
         db.session.commit()
+
+        # Notify subscribers via WebSocket server
+        async def notify_websocket():
+            async with websockets.connect("ws://websocket:6789") as websocket:
+                await websocket.send(json.dumps({
+                    "action": "new_submission",
+                    "competition_id": id,
+                    "submission": {
+                        "submission_id": new_submission.id,
+                        "title": new_submission.title,
+                        "content": new_submission.content,
+                        "user_id": user_id,
+                        "timestamp": str(datetime.datetime.utcnow())
+                    }
+                }))
+
+        asyncio.run(notify_websocket())
+
         return jsonify({"submission_id": new_submission.id, "message": "Submission successful"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -131,13 +150,6 @@ def like_submission(id, submission_id):
     try:
         db.session.add(new_like)
         db.session.commit()
-
-        # # Notify the user via WebSocket
-        # socketio.emit('like_notification', {
-        #     "message": f"Your submission {submission_id} has received a new like!",
-        #     "submission_id": submission_id,
-        #     "timestamp": str(datetime.datetime.utcnow())
-        # }, broadcast=True)
 
         return jsonify({"message": "Like added"}), 201
     except Exception as e:
@@ -156,14 +168,6 @@ def comment_on_submission(id, submission_id):
     try:
         db.session.add(new_comment)
         db.session.commit()
-
-        # # Notify the user via WebSocket
-        # socketio.emit('comment_notification', {
-        #     "message": f"Your submission {submission_id} has received a new comment!",
-        #     "submission_id": submission_id,
-        #     "comment_id": new_comment.id,
-        #     "timestamp": str(datetime.datetime.utcnow())
-        # }, broadcast=True)
 
         return jsonify({"comment_id": new_comment.id, "message": "Comment added"}), 201
     except Exception as e:

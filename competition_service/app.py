@@ -2,7 +2,6 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
-from flask_socketio import SocketIO
 from dotenv import load_dotenv
 import os
 
@@ -11,7 +10,6 @@ load_dotenv()  # Load environment variables from .env
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 jwt = JWTManager()
-socketio = SocketIO()
 
 def create_app():
     app = Flask(__name__)
@@ -21,7 +19,6 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 
     # Initialize extensions
-    socketio.init_app(app, cors_allowed_origins="*")
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
@@ -34,4 +31,4 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    socketio.run(app, host="0.0.0.0", port=5001, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)

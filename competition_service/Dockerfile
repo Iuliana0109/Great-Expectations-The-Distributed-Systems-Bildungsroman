@@ -22,7 +22,8 @@ RUN pip install dnspython==1.16.0
 RUN pip install Werkzeug==1.0.1
 RUN pip install SQLAlchemy==1.3.24
 RUN pip install requests==2.26.0
-
+RUN pip install redis==4.0.2
+RUN pip install websockets==10.1
 
 # Copy the current directory contents into the container at /app
 COPY . /app
