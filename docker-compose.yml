@@ -10,7 +10,7 @@ services:
     depends_on:
       - postgres_competition
       - user_management_service
-    command: gunicorn -b 0.0.0.0:5001 app:app --timeout 60 --workers 4
+    command: gunicorn -b 0.0.0.0:5001 app:app --workers 4 --threads 2 --worker-connections 100 --timeout 30
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/status"]
       interval: 30s
@@ -30,7 +30,7 @@ services:
     env_file:
       - ./user_management_service/.env
     container_name: user_management_service
-    command: gunicorn -b 0.0.0.0:5000 app:app --timeout 30 --workers 4
+    command: gunicorn -b 0.0.0.0:5000 app:app --workers 1 --threads 2 --worker-connections 10 --timeout 0.5
     depends_on:
       - postgres_user_management
     healthcheck:

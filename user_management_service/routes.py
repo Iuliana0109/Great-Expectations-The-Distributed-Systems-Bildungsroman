@@ -7,11 +7,13 @@ import datetime
 import asyncio
 import websockets
 import json
+import time
 
 user_routes = Blueprint('user_routes', __name__)
 
 @user_routes.route('/status', methods=['GET'])
 def status():
+    time.sleep(10)
     return jsonify({"status": "User Management Service is running"}), 200
 
 @user_routes.route('/users/register', methods=['POST'])
