@@ -1,6 +1,6 @@
 import requests
 from flask import Blueprint, request, jsonify
-from app import db
+from app import db, socketio
 from models import Competition, Submission, Like, Comment
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_socketio import emit
@@ -83,14 +83,25 @@ def get_active_competitions():
 def get_competition_details(id):
     competition = Competition.query.get(id)
     if competition:
+        submissions = Submission.query.filter_by(competition_id=id).all()
+        submission_details = [{
+            "submission_id": sub.id,
+            "title": sub.title,
+            "content": sub.content,
+            "created_at": sub.created_at,
+            "user_id": sub.user_id,
+            "likes_count": Like.query.filter_by(submission_id=sub.id).count(),
+            "comments_count": Comment.query.filter_by(submission_id=sub.id).count()
+        } for sub in submissions]
+
         return jsonify({
             "competition_id": competition.id,
             "title": competition.title,
             "description": competition.description,
-            "admin_id": competition.admin_id,
-            "start_date": competition.start_date,
-            "end_date": competition.end_date,
-            "created_at": competition.created_at
+            "start_date": competition.start_date.isoformat() if competition.start_date else None,
+            "end_date": competition.end_date.isoformat() if competition.end_date else None,
+            "created_at": competition.created_at,
+            "submissions": submission_details
         }), 200
     return jsonify({"error": "Competition not found"}), 404
 
@@ -99,7 +110,11 @@ def get_competition_details(id):
 @jwt_required()
 def submit_entry(id):
     user_id = get_jwt_identity()
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except:
+        data = json.loads(request.data.decode('utf-8'))
+
     new_submission = Submission(title=data['title'], content=data['content'], competition_id=id, user_id=user_id)
     try:
         db.session.add(new_submission)
@@ -117,12 +132,12 @@ def like_submission(id, submission_id):
         db.session.add(new_like)
         db.session.commit()
 
-        # Notify the user via WebSocket
-        socketio.emit('like_notification', {
-            "message": f"Your submission {submission_id} has received a new like!",
-            "submission_id": submission_id,
-            "timestamp": str(datetime.datetime.utcnow())
-        }, broadcast=True)
+        # # Notify the user via WebSocket
+        # socketio.emit('like_notification', {
+        #     "message": f"Your submission {submission_id} has received a new like!",
+        #     "submission_id": submission_id,
+        #     "timestamp": str(datetime.datetime.utcnow())
+        # }, broadcast=True)
 
         return jsonify({"message": "Like added"}), 201
     except Exception as e:
@@ -133,20 +148,69 @@ def like_submission(id, submission_id):
 @jwt_required()
 def comment_on_submission(id, submission_id):
     user_id = get_jwt_identity()
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except:
+        data = json.loads(request.data.decode('utf-8'))
     new_comment = Comment(content=data['content'], user_id=user_id, submission_id=submission_id)
     try:
         db.session.add(new_comment)
         db.session.commit()
 
-        # Notify the user via WebSocket
-        socketio.emit('comment_notification', {
-            "message": f"Your submission {submission_id} has received a new comment!",
-            "submission_id": submission_id,
-            "comment_id": new_comment.id,
-            "timestamp": str(datetime.datetime.utcnow())
-        }, broadcast=True)
+        # # Notify the user via WebSocket
+        # socketio.emit('comment_notification', {
+        #     "message": f"Your submission {submission_id} has received a new comment!",
+        #     "submission_id": submission_id,
+        #     "comment_id": new_comment.id,
+        #     "timestamp": str(datetime.datetime.utcnow())
+        # }, broadcast=True)
 
         return jsonify({"comment_id": new_comment.id, "message": "Comment added"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+@competition_routes.route('/competitions/<id>', methods=['DELETE'])
+@jwt_required()
+def delete_competition(id):
+    competition = Competition.query.get(id)
+    if not competition:
+        return jsonify({"error": "Competition not found"}), 404
+
+    try:
+        db.session.delete(competition)
+        db.session.commit()
+        return jsonify({"message": "Competition deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@competition_routes.route('/submissions/<submission_id>', methods=['DELETE'])
+@jwt_required()
+def delete_submission(submission_id):
+    submission = Submission.query.get(submission_id)
+    if not submission:
+        return jsonify({"error": "Submission not found"}), 404
+
+    try:
+        db.session.delete(submission)
+        db.session.commit()
+        return jsonify({"message": "Submission deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@competition_routes.route('/submissions/<id>', methods=['GET'])
+def get_submission(id):
+    submission = Submission.query.get(id)
+    if submission:
+        like_count = Like.query.filter_by(submission_id=id).count()
+        comment_count = Comment.query.filter_by(submission_id=id).count()
+        return jsonify({
+            "submission_id": submission.id,
+            "title": submission.title,
+            "content": submission.content,
+            "created_at": submission.created_at,
+            "competition_id": submission.competition_id,
+            "user_id": submission.user_id,
+            "likes": like_count,
+            "comments": comment_count
+        }), 200
+    return jsonify({"error": "Submission not found"}), 404

@@ -18,7 +18,7 @@ class Competition(db.Model):
 
 
 class Submission(db.Model):
-    id = db.Column(Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()), nullable=False)
     title = db.Column(String(255), nullable=False)
     content = db.Column(Text, nullable=False)
     created_at = db.Column(DateTime, default=datetime.utcnow)
@@ -29,7 +29,7 @@ class Submission(db.Model):
         return f"<Submission {self.title}>"
 
 class Like(db.Model):
-    id = db.Column(Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()), nullable=False)
     user_id = db.Column(String(36), nullable=False)
     submission_id = db.Column(Integer, ForeignKey('submission.id'), nullable=False)
     created_at = db.Column(DateTime, default=datetime.utcnow)
@@ -39,7 +39,7 @@ class Like(db.Model):
 
 
 class Comment(db.Model):
-    id = db.Column(Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()), nullable=False)
     content = db.Column(Text, nullable=False)
     created_at = db.Column(DateTime, default=datetime.utcnow)
     user_id = db.Column(String(36), nullable=False)

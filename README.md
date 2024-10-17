@@ -300,28 +300,6 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 
 <br>
 
-6. Reply to Comment
-
-- Endpoint: /competitions/{id}/reply/{comment_id}
-- Method: POST
-- Request Body:
-```json
-{
-  "content": "string"
-}
-```
-
-- Response (JSON):
-```json
-{
-  "comment_id": "string",
-  "message": "Reply added"
-}
-```
-- JWT Required: Yes
-
-<br>
-
 ### WebSockets
 WebSockets are used to deliver real-time notifications to users about important events on the platform. These notifications include:
 

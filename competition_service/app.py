@@ -21,10 +21,10 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 
     # Initialize extensions
+    socketio.init_app(app, cors_allowed_origins="*")
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
-    socketio.init_app(app, cors_allowed_origins="*")
 
     # Register Blueprints
     from routes import competition_routes
