@@ -4,12 +4,14 @@ import time
 
 URL = "http://localhost:5000/status"
 NUM_REQUESTS = 1000  # Number of requests to send (total)
-MAX_WORKERS = 50
+MAX_WORKERS = 200
 
-# Function to send a single request
+import random
+
 def send_request(index):
     try:
-        response = requests.get(URL)
+        time.sleep(random.uniform(0.5, 2.0))
+        response = requests.get(URL, timeout=5)
         if response.status_code == 200:
             print(f"Request {index}: Success")
         else:
