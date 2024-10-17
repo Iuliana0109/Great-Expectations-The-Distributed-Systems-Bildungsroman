@@ -1,26 +1,22 @@
-# Use official Python image
-FROM python:3.9
+FROM python:3.10-slim
 
-# Set the working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# Install required packages for psycopg2
+# Install system dependencies for PostgreSQL and other packages
 RUN apt-get update && apt-get install -y \
-    gcc \
+    build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the requirements file
-COPY requirements.txt .
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-# Install dependencies
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the source code into the container
-COPY . .
-
-# Expose the Flask port
+# Expose the port the app runs on
 EXPOSE 5000
 
-# Run the Flask app
+# Run the application
 CMD ["python", "app.py"]

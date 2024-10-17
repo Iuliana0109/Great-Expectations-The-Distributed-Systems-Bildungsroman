@@ -1,44 +1,51 @@
 version: '3'
 services:
-  user-management:
+  competition_service:
+    build: ./competition_service
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./competition_service/.env
+    container_name: competition_service
+    depends_on:
+      - postgres_competition
+    links:
+      - postgres_competition
+
+  user_management_service:
     build: ./user_management_service
     ports:
       - "5000:5000"
-    environment:
-      - DATABASE_URL=postgresql://user:password@postgres/UserManagement
-      - SECRET_KEY=supersecretkey123
+    env_file:
+      - ./user_management_service/.env
+    container_name: user_management_service
     depends_on:
-      - postgres
+      - postgres_user_management
+    links:
+      - postgres_user_management
 
-  competition-service:
-    build: ./competition_service 
-    ports:
-      - "5001:5001" 
-    environment:
-      - DATABASE_URL=postgresql://user:password@postgres/competitionservice
-      - SECRET_KEY=supersecretkey123
-    depends_on:
-      - postgres
-
-  postgres:
+  postgres_user_management:
     image: postgres:13
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: UserManagement  # Default DB for user management service
+      POSTGRES_DB: UserManagement
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init/init_db.sh:/docker-entrypoint-initdb.d/init_db.sh  # Initialize additional database
-
-  gateway:
-    build: ./gateway
+      - postgres_user_data:/var/lib/postgresql/data
+    
+  postgres_competition:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: CompetitionDB
     ports:
-      - "3000:3000"
-    depends_on:
-      - user-management
-      - competition-service
+      - "5435:5432"
+    volumes:
+      - postgres_competition_data:/var/lib/postgresql/data
 
 volumes:
-  postgres_data:
+  postgres_user_data:
+  postgres_competition_data:

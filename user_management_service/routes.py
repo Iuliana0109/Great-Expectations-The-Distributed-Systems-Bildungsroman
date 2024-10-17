@@ -1,91 +1,107 @@
+import requests
 from flask import Blueprint, request, jsonify
-from models import db, User
+from app import db, bcrypt
+from models import User, Subscription
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+import datetime
 
-bp = Blueprint('user', __name__)
+user_routes = Blueprint('user_routes', __name__)
 
-# Register a new user
-@bp.route('/users/register', methods=['POST'])
-def register_user():
+@user_routes.route('/users/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    hashed_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
+    new_user = User(username=data['username'], email=data['email'], password=hashed_password)
     try:
-        data = request.json
-        if not data.get('username') or not data.get('email') or not data.get('password'):
-            return jsonify({'message': 'Missing required fields'}), 400
-
-        # Check if the user already exists
-        if User.query.filter((User.username == data['username']) | (User.email == data['email'])).first():
-            return jsonify({'message': 'User already exists'}), 400
-        
-        new_user = User(username=data['username'], email=data['email'], password=data['password'])
         db.session.add(new_user)
         db.session.commit()
-        return jsonify({'user_id': new_user.id, 'username': new_user.username, 'email': new_user.email}), 201
+        return jsonify({
+            "user_id": new_user.id,
+            "username": new_user.username,
+            "email": new_user.email,
+            "created_at": new_user.created_at
+        }), 201
     except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({'message': 'An error occurred during registration'}), 500
+        return jsonify({"error": str(e)}), 400
 
-# Test database connection
-@bp.route('/test-db', methods=['GET'])
-def test_db():
-    try:
-        users = User.query.all()
-        return jsonify([user.username for user in users]), 200
-    except Exception as e:
-        return jsonify({'message': str(e)}), 500
+@user_routes.route('/users/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    user = User.query.filter_by(email=data['email']).first()
+    if user and bcrypt.check_password_hash(user.password, data['password']):
+        expires = datetime.timedelta(hours=1)
+        access_token = create_access_token(identity=user.id, expires_delta=expires)
+        return jsonify({"token": access_token, "user_id": user.id, "expires_at": str(datetime.datetime.utcnow() + expires)}), 200
+    return jsonify({"error": "Invalid credentials"}), 401
 
-# Login user
-@bp.route('/users/login', methods=['POST'])
-def login_user():
-    try:
-        data = request.json
-        if not data.get('email') or not data.get('password'):
-            return jsonify({'message': 'Missing required fields'}), 400
-        
-        user = User.query.filter_by(email=data['email']).first()
-        if user and user.password == data['password']:
-            token = create_access_token(identity=user.id)
-            return jsonify({'token': token, 'user_id': user.id}), 200
-        
-        return jsonify({'message': 'Invalid credentials'}), 401
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({'message': 'An error occurred during login'}), 500
-
-# Get user profile
-@bp.route('/users/profile', methods=['GET'])
+@user_routes.route('/users/profile', methods=['GET'])
 @jwt_required()
 def get_profile():
-    try:
-        user_id = get_jwt_identity()
-        user = User.query.get(user_id)
-        if not user:
-            return jsonify({'message': 'User not found'}), 404
-
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if user:
         return jsonify({
-            'user_id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'created_at': user.created_at
+            "user_id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "created_at": user.created_at
         }), 200
-    except Exception as e:
-        return jsonify({'message': 'An error occurred while retrieving the profile'}), 500
+    return jsonify({"error": "User not found"}), 404
 
-
-# Delete user
-@bp.route('/users/delete', methods=['DELETE'])
+@user_routes.route('/users/subscribe/<competition_id>', methods=['POST'])
 @jwt_required()
-def delete_user():
+def subscribe(competition_id):
+    user_id = get_jwt_identity()
+    new_subscription = Subscription(user_id=user_id, competition_id=competition_id)
     try:
-        user_id = get_jwt_identity()  # Get user ID from JWT
-        user = User.query.get(user_id)
+        db.session.add(new_subscription)
+        db.session.commit()
+        return jsonify({"message": "Subscription successful"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
-        if user:
+@user_routes.route('/users/validate', methods=['POST'])
+@jwt_required()
+def validate_user():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if user:
+        return jsonify({"user_id": user_id, "valid": True}), 200
+    return jsonify({"valid": False}), 404
+
+@user_routes.route('/users/subscriptions', methods=['GET'])
+@jwt_required()
+def get_subscriptions():
+    user_id = get_jwt_identity()
+    subscriptions = Subscription.query.filter_by(user_id=user_id).all()
+    if subscriptions:
+        result = [{
+            "subscription_id": sub.id,
+            "competition_id": sub.competition_id,
+            "created_at": sub.created_at
+        } for sub in subscriptions]
+        return jsonify(result), 200
+    return jsonify([]), 200
+
+@user_routes.route('/users/delete', methods=['DELETE'])
+@jwt_required()
+def delete_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if user:
+        try:
             db.session.delete(user)
             db.session.commit()
-            return jsonify({'message': f'User {user.username} has been deleted'}), 200
-        else:
-            return jsonify({'message': 'User not found'}), 404
+            return jsonify({"message": "User profile deleted successfully"}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
+    return jsonify({"error": "User not found"}), 404
 
+@user_routes.route('/test-db', methods=['GET'])
+def test_db():
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        return jsonify({"message": "Database connection is successful"}), 200
     except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({'message': 'An error occurred while trying to delete the user'}), 500
+        return jsonify({"error": str(e)}), 500

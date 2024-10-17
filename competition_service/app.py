@@ -1,21 +1,37 @@
 from flask import Flask
-from models import db
-from routes import bp as competition_bp
+from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
-from flask_migrate import Migrate
+from flask_socketio import SocketIO
+from dotenv import load_dotenv
+import os
 
-app = Flask(__name__)
-app.config.from_object('config.Config')
+load_dotenv()  # Load environment variables from .env
 
-@app.route('/')
-def index():
-    return "Welcome to the Competition Service!"
+db = SQLAlchemy()
+bcrypt = Bcrypt()
+jwt = JWTManager()
+socketio = SocketIO()
 
-db.init_app(app)
-migrate = Migrate(app, db)  # Initialize Flask-Migrate with app and db
-jwt = JWTManager(app)
+def create_app():
+    app = Flask(__name__)
 
-app.register_blueprint(competition_bp)
+    # Load configuration
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5001)
+    # Initialize extensions
+    db.init_app(app)
+    bcrypt.init_app(app)
+    jwt.init_app(app)
+    socketio.init_app(app, cors_allowed_origins="*")
+
+    # Register Blueprints
+    from routes import competition_routes
+    app.register_blueprint(competition_routes)
+
+    return app
+
+if __name__ == "__main__":
+    app = create_app()
+    socketio.run(app, host="0.0.0.0", port=5001, debug=True)

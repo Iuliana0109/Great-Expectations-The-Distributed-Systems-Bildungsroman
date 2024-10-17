@@ -1,21 +1,35 @@
 from flask import Flask
-from models import db
-from routes import bp as user_bp
+from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
-from flask_migrate import Migrate
+from dotenv import load_dotenv
+import os
 
-app = Flask(__name__)
-app.config.from_object('config.Config')
+load_dotenv()  # Load environment variables from .env
 
-@app.route('/')
-def index():
-    return "Hello, World!"
+db = SQLAlchemy()
+bcrypt = Bcrypt()
+jwt = JWTManager()
 
-db.init_app(app)
-migrate = Migrate(app, db)  # Initialize Flask-Migrate with app and db
-jwt = JWTManager(app)
+def create_app():
+    app = Flask(__name__)
 
-app.register_blueprint(user_bp)
+    # Load configuration
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    # Initialize extensions
+    db.init_app(app)
+    bcrypt.init_app(app)
+    jwt.init_app(app)
+
+    # Register Blueprints
+    from routes import user_routes
+    app.register_blueprint(user_routes)
+
+    return app
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(host="0.0.0.0", port=5000, debug=True)
