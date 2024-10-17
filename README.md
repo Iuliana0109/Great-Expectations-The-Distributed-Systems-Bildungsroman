@@ -301,31 +301,15 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 <br>
 
 ### WebSockets
-WebSockets are used to deliver real-time notifications to users about important events on the platform. These notifications include:
-
-- Likes on their submission.
-- All users subscribed to a competition get notified of all new submissions
-- Comments on their submission.
-- Replies to their comments.
-- Competition results (their ranking when a competition ends).
+WebSockets are used for all users subscribed to a competition to get notified of all new submissions
 
 **How Does It Work:** <br>
-A WebSocket connection is established between the client (browser or app) and the Competition Service when the user logs (already has some submissions) or when the user submits something to a competition. When a significant event occurs (e.g., a like or comment on a submission), the server sends a real-time notification through the open WebSocket connection to notify the user.
+A WebSocket connection is established between the client (browser or app) and the Competition Service when the user logs (already has some submissions) or when the user submits something to a competition. When a submission occurs, the server sends a real-time notification through the open WebSocket connection to notify the user.
 
-1. User A likes User B’s submission via a POST request.
-2. The server processes the like and updates the database.
-3. The server sends a WebSocket notification to User B: “Your submission received a like!”
+1. User A submits an entry via a POST request.
+2. The server processes the submission and updates the database.
+3. The server sends a WebSocket notification to User B: “New submission”
 4. User B instantly receives the notification in their browser or app through the WebSocket.
-
-```json
-{
-  "type": "notification",
-  "message": "Your submission has received a new like!",
-  "submission_id": "string",
-  "timestamp": "date"
-}
-```
-The WebSocket will be closed when the user is logged out.
 
 <br>
 

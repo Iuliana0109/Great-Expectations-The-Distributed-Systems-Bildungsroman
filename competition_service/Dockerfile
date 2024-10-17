@@ -24,6 +24,7 @@ RUN pip install SQLAlchemy==1.3.24
 RUN pip install requests==2.26.0
 RUN pip install redis==4.0.2
 RUN pip install websockets==10.1
+RUN pip install gunicorn
 
 # Copy the current directory contents into the container at /app
 COPY . /app
@@ -35,4 +36,4 @@ COPY . /app
 EXPOSE 5001
 
 # Run the application
-CMD ["python", "app.py"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5001", "--timeout", "30", "app:app"]

@@ -4,8 +4,15 @@ from app import db, bcrypt
 from models import User, Subscription
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import datetime
+import asyncio
+import websockets
+import json
 
 user_routes = Blueprint('user_routes', __name__)
+
+@user_routes.route('/status', methods=['GET'])
+def status():
+    return jsonify({"status": "User Management Service is running"}), 200
 
 @user_routes.route('/users/register', methods=['POST'])
 def register():
@@ -56,6 +63,19 @@ def subscribe(competition_id):
     try:
         db.session.add(new_subscription)
         db.session.commit()
+
+        async def subscribe_via_websocket():
+            try:
+                async with websockets.connect("ws://websocket_server:6789") as websocket:
+                    await websocket.send(json.dumps({
+                        "action": "subscribe",
+                        "competition_id": competition_id
+                    }))
+            except Exception as e:
+                print(f"Failed to subscribe via WebSocket: {str(e)}")
+
+        # Run the WebSocket subscription asynchronously
+        asyncio.run(subscribe_via_websocket())
         return jsonify({"message": "Subscription successful"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400

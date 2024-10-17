@@ -8,6 +8,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_socketio import emit, join_room
 import datetime
 import json
+import time
 
 competition_routes = Blueprint('competition_routes', __name__)
 
@@ -21,6 +22,15 @@ def validate_user(headers):
     except requests.exceptions.RequestException as e:
         current_app.logger.error(f"Error validating user: {e}")
         return False
+
+@competition_routes.route('/status', methods=['GET'])
+def status():
+    return jsonify({"status": "Competition Service is running"}), 200
+
+@competition_routes.route('/long-task', methods=['GET'])
+def long_task():
+    time.sleep(70)
+    return jsonify({"message": "Task completed"}), 200
 
 @competition_routes.route('/competitions', methods=['POST'])
 @jwt_required()
@@ -150,7 +160,6 @@ def like_submission(id, submission_id):
     try:
         db.session.add(new_like)
         db.session.commit()
-
         return jsonify({"message": "Like added"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400
