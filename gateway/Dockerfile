@@ -1,11 +1,10 @@
-# Dockerfile for Gateway
-FROM node:16-alpine
+FROM node:14
 
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY package.json ./
+COPY package-lock.json ./
 RUN npm install
 COPY . .
-
 EXPOSE 8080
 
 CMD ["node", "app.js"]
