@@ -20,6 +20,8 @@ services:
     links:
       - postgres_competition
       - user_management_service
+    networks:
+      - app-network
 
   user_management_service:
     build:
@@ -30,7 +32,7 @@ services:
     env_file:
       - ./user_management_service/.env
     container_name: user_management_service
-    command: gunicorn -b 0.0.0.0:5000 app:app --workers 2 --threads 4 --worker-connections 20 --timeout 1 --worker-class gevent --log-level debug
+    command: gunicorn -b 0.0.0.0:5000 app:app --workers 2 --threads 4 --worker-connections 20 --timeout 5 --worker-class gevent --log-level debug
     depends_on:
       - postgres_user_management
     healthcheck:
@@ -41,20 +43,39 @@ services:
       start_period: 5s
     links:
       - postgres_user_management
+    networks:
+      - app-network
 
   redis:
     image: "redis:alpine"
     ports:
       - "6379:6379"
+    networks:
+      - app-network
 
   websocket_server:
     build: ./websocket_server
     container_name: websocket
     ports:
       - "6789:6789"
-   
     depends_on:
       - redis
+    networks:
+      - app-network
+
+  gateway:
+    container_name: gateway
+    build: ./gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user_management_service
+      - competition_service
+    links:
+      - user_management_service
+      - competition_service
+    networks:
+      - app-network
 
   postgres_user_management:
     image: postgres:13
@@ -62,6 +83,8 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: UserManagement
+    networks:
+      - app-network
     ports:
       - "5434:5432"
     volumes:
@@ -73,6 +96,8 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: CompetitionDB
+    networks:
+      - app-network
     ports:
       - "5435:5432"
     volumes:
@@ -81,3 +106,7 @@ services:
 volumes:
   postgres_user_data:
   postgres_competition_data:
+
+networks:
+  app-network:
+    driver: bridge

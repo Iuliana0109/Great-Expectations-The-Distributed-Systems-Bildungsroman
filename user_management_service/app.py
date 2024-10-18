@@ -4,6 +4,7 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
 import os
+from flask_cors import CORS
 
 load_dotenv()  # Load environment variables from .env
 
@@ -13,6 +14,7 @@ jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
+    CORS(app)
 
     # Load configuration
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')

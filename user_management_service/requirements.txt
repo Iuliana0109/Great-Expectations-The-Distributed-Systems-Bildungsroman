@@ -11,3 +11,5 @@ redis==4.0.2
 websockets==10.1
 gunicorn
 gevent>=1.4
+flask-cors
+

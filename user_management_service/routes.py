@@ -19,6 +19,8 @@ def status():
 @user_routes.route('/users/register', methods=['POST'])
 def register():
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON payload"}), 400
     hashed_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
     new_user = User(username=data['username'], email=data['email'], password=hashed_password)
     try:
