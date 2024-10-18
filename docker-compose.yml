@@ -30,7 +30,7 @@ services:
     env_file:
       - ./user_management_service/.env
     container_name: user_management_service
-    command: gunicorn -b 0.0.0.0:5000 app:app --workers 1 --threads 2 --worker-connections 1 --timeout 1
+    command: gunicorn -b 0.0.0.0:5000 app:app --workers 2 --threads 4 --worker-connections 20 --timeout 1 --worker-class gevent --log-level debug
     depends_on:
       - postgres_user_management
     healthcheck:

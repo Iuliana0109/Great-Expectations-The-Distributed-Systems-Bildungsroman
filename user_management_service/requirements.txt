@@ -10,3 +10,4 @@ requests==2.26.0
 redis==4.0.2
 websockets==10.1
 gunicorn
+gevent>=1.4
