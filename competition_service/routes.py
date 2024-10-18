@@ -133,18 +133,21 @@ def submit_entry(id):
 
         # Notify subscribers via WebSocket server
         async def notify_websocket():
-            async with websockets.connect("ws://websocket:6789") as websocket:
-                await websocket.send(json.dumps({
-                    "action": "new_submission",
-                    "competition_id": id,
-                    "submission": {
-                        "submission_id": new_submission.id,
-                        "title": new_submission.title,
-                        "content": new_submission.content,
-                        "user_id": user_id,
-                        "timestamp": str(datetime.datetime.utcnow())
-                    }
-                }))
+            try:
+                async with websockets.connect("ws://localhost:6480") as websocket:
+                    await websocket.send(json.dumps({
+                        "action": "new_submission",
+                        "competition_id": id,
+                        "submission": {
+                            "submission_id": new_submission.id,
+                            "title": new_submission.title,
+                            "content": new_submission.content,
+                            "user_id": user_id,
+                            "timestamp": str(datetime.datetime.utcnow())
+                        }
+                    }))
+            except Exception as e:
+                current_app.logger.error(f"WebSocket notification failed: {e}")
 
         asyncio.run(notify_websocket())
 
