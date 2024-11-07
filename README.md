@@ -20,6 +20,36 @@ The Literary Competition Platform is highly suitable for a distributed systems a
 **Wattpad:** a platform for writers and readers to share stories and read user-generated content. It uses a microservices architecture to handle user accounts, story submissions, recommendations, and social interactions. <br>
 **Medium:** a publishing platform that allows users to write and publish articles. It employs microservices to manage user profiles, content creation, recommendations, and social features.
 
+## Running and Deploying the Project with Docker
+
+1. **Install Docker and Docker Compose**: Ensure both Docker and Docker Compose are installed on your machine.
+   - [Docker Installation Guide](https://docs.docker.com/get-docker/)
+   - [Docker Compose Installation Guide](https://docs.docker.com/compose/install/)
+
+2. **Clone the Project Repository**:
+   ```bash
+   git clone <repository_url>
+   cd <repository_folder>
+   ```
+
+3. **Run the following command in the terminal**:
+    ```bash
+      docker-compose up --build
+    ```
+
+## Testing the Project
+
+1. **Import Postman Collection**:
+   - Import the provided Postman collection (`postman_collection.json`) into Postman to access all API endpoints.
+
+2. **Configure Postman Environment**:
+   - Set up the base URL in Postman (e.g., `http://localhost:8080`).
+
+3. **Order of Endpoint Testing**:
+   - **Step 1**: Register a new user with the `/user/register` endpoint.
+   - **Step 2**: Log in using the `/user/login` endpoint to obtain a JWT token, which is required for authenticated requests.
+   - **Step 3**: Test other endpoints, the documentation is [here](#endpoint-documentation).
+
 ## Service Boundaries
 
 ### User Management Service
@@ -46,6 +76,29 @@ Distributes incoming requests to multiple instances of the microservices based o
 ### Circuit Breaker
 Monitors API calls between services. If a service fails 3 times (based on timeout limits), it will temporarily stop forwarding requests to that service, logging the failure for later recovery.
 
+### ELK Stack (Elasticsearch, Logstash, Kibana)
+
+- **Purpose**: Aggregates and visualizes logs from all services. Provides a centralized logging solution, making it easier to monitor, troubleshoot, and analyze system performance.
+- **Components**:
+  - **Elasticsearch**: Stores and indexes logs.
+  - **Logstash**: Collects, processes, and forwards logs to Elasticsearch.
+  - **Kibana**: Visualizes logs from Elasticsearch, allowing real-time monitoring.
+
+### Database Redundancy & Replication
+
+- **Purpose**: Implements failover and data replication for high availability.
+- **Implementation**: Configures replication for at least one database with a minimum of three replicas (additional replicas if required). This ensures data durability and availability in case of service failure.
+
+### Consistent Hashing for Cache
+
+- **Purpose**: Distributes cached data efficiently across multiple Redis nodes to ensure high availability.
+- **Description**: Uses consistent hashing for better cache distribution and scalability, ensuring balanced load across cache nodes and avoiding data loss during scaling.
+
+### Data Warehouse with ETL
+
+- **Purpose**: Consolidates data from all services into a centralized data warehouse for periodic analysis and reporting.
+- **Implementation**: An ETL process (Extract, Transform, Load) is created to periodically fetch data from microservices and load it into the warehouse, supporting data analysis and reporting tasks.
+
 ### Deployment Diagram:
 ![Deployment Diagram](Deployment%20Diagram.png)
 
@@ -59,7 +112,7 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 - Docker for deployment and scaling
 - Postman for testing
 
-## Data Management
+## Endpoint Documentation
 ### User Management Service Endpoints:
 1. Register User
 
@@ -69,19 +122,19 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 
 ```json
 {
-  "username": "string",
-  "email": "string",
-  "password": "string"
+    "username": "string",
+    "email": "string",
+    "password": "string"
 }
 ```
 - Response (JSON):
 
 ```json
 {
-  "user_id": "string",
-  "username": "string",
-  "email": "string",
-  "created_at": "timestamp"
+    "created_at": "string",
+    "email": "string",
+    "user_id": "string",
+    "username": "string"
 }
 ```
 - JWT Required: No
@@ -104,9 +157,9 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 
 ```json
 {
-  "token": "string",
-  "user_id": "string",
-  "expires_at": "timestamp"
+    "expires_at": "string",
+    "token": "string",
+    "user_id": "string"
 }
 ```
 - JWT Required: No (Token is issued upon login)
@@ -122,41 +175,17 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 
 ```json
 {
-  "user_id": "string",
-  "username": "string",
-  "email": "string",
-  "profile_picture": "string",
-  "bio": "string",
-  "created_at": "timestamp"
+    "created_at": "string",
+    "email": "string",
+    "user_id": "string",
+    "username": "string"
 }
 ```
 - JWT Required: Yes
 
 <br>
 
-4. Get User Submissions
-
-- Endpoint: /users/profile/submissions
-- Method: GET
-- Headers: ``JWT Token``
-- Response (JSON):
-
-```json
-[
-  {
-    "submission_id": "string",
-    "competition_id": "string",
-    "title": "string",
-    "content": "string",
-    "created_at": "timestamp"
-  }
-]
-```
-- JWT Required: Yes
-
-<br>
-
-5. Get User Subscriptions
+4. Get User Subscriptions
 
 - Endpoint: /users/profile/subscriptions
 - Method: GET
@@ -165,22 +194,21 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 
 ```json
 [
-  {
-    "competition_id": "string",
-    "title": "string",
-    "description": "string",
-    "start_date": "date",
-    "end_date": "date"
-  }
+    {
+        "competition_id": "string",
+        "created_at": "string",
+        "subscription_id": "string"
+    }
 ]
 ```
 - JWT Required: Yes
 
 <br>
+<br>
 
-6. Subscribe to Competition
+5. Subscribe to Competition
 
-- Endpoint: /users/subscribe/{id}
+- Endpoint: /users/subscribe/{competition id}
 - Method: POST
 - Headers: ``JWT Token``
 - Response (JSON):
@@ -195,53 +223,109 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 <br>
 <br>
 
-### Competition Service Endpoints:
-1. Get Active Competitions
-
-- Endpoint: /competitions
-- Method: GET
+6. Delete User
+- Endpoint: /users/delete/{user id}
+- Method: DELETE
+- Headers: ``JWT Token``
 - Response (JSON):
 
 ```json
-[
-  {
-    "competition_id": "string",
-    "title": "string",
-    "description": "string",
-    "start_date": "date",
-    "end_date": "date"
-  }
-]
+{
+  "message": "User profile deleted successfully"
+}
 ```
-- JWT Required: No
 
-<br>
+<br><br>
 
-2. Get Competition Details
-
-- Endpoint: /competitions/{id}
+7. Status Endpoint
+- Endpoint: /users/status
 - Method: GET
 - Response (JSON):
 
 ```json
 {
+  "status": "User Management Service is running"
+}
+```
+- JWT Required: No
+
+### Competition Service Endpoints:
+
+1. Create Competition
+
+- Endpoint: /competitions
+- Method: POST
+- Headers: ``JWT Token``
+- Response (JSON):
+
+```json
+{
   "competition_id": "string",
-  "title": "string",
-  "description": "string",
-  "admin_id": "string",
-  "start_date": "date",
-  "end_date": "date",
-  "created_at": "timestamp"
+  "message": "Competition created successfully"
+}
+```
+- JWT Required: Yes
+
+<br>
+
+2. Get Competitions
+
+- Endpoint: /competitions
+- Method: GET
+- Headers: ``JWT Token``
+- Response (JSON):
+
+```json
+[
+    {
+        "competition_id": "string",
+        "description": "string",
+        "end_date": "string",
+        "start_date": "string",
+        "title": "string"
+    }
+]
+```
+- JWT Required: yes
+
+<br>
+
+3. Get Competition by ID
+
+- Endpoint: /competitions/{competition id}
+- Method: GET
+- Response (JSON):
+
+```json
+{
+    "competition_id": "string",
+    "created_at": "string",
+    "description": "string",
+    "end_date": "string",
+    "start_date": "string",
+    "submissions": [
+        {
+            "comments_count": "integer",
+            "content": "string",
+            "created_at": "string",
+            "likes_count": "integer",
+            "submission_id": "string",
+            "title": "string",
+            "user_id": "string"
+        }
+    ],
+    "title": "string"
 }
 ```
 - JWT Required: No
 
 <br>
 
-3. Submit Entry to Competition
+4. Submit Entry to Competition
 
-- Endpoint: /competitions/{id}/submit
+- Endpoint: /competitions/{competition id}/submit
 - Method: POST
+- Headers: ``JWT Token``
 - Request Body:
 
 ```json
@@ -263,10 +347,33 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 
 <br>
 
-4. Like Submission
+5. Get Submission by id
+
+- Endpoint: /submissions/{submission id}
+- Method: POST
+- Response (JSON):
+
+```json
+{
+    "comments": "integer",
+    "competition_id": "string",
+    "content": "string",
+    "created_at": "string",
+    "likes": "integer",
+    "submission_id": "string",
+    "title": "string",
+    "user_id": "string"
+}
+```
+- JWT Required: No
+
+<br>
+
+6. Like Submission
 
 - Endpoint: /competitions/{id}/like/{submission_id}
 - Method: POST
+- Headers: ``JWT Token``
 - Response (JSON):
 
 ```json
@@ -278,10 +385,11 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 
 <br>
 
-5. Comment on Submission
+7. Comment on Submission
 
 - Endpoint: /competitions/{id}/comment/{submission_id}
 - Method: POST
+- Headers: ``JWT Token``
 - Request:
 ```json
 {
@@ -293,7 +401,37 @@ Monitors API calls between services. If a service fails 3 times (based on timeou
 ```json
 {
   "comment_id": "string",
-  "message": "Comment added"
+  "message": "string"
+}
+```
+- JWT Required: Yes
+
+<br>
+
+8. Delete a Competition
+
+- Endpoint: /competitions/{competition id}
+- Method: DELETE
+- Headers: ``JWT Token``
+- Response (JSON):
+```json
+{
+  "message": "Competition deleted successfully"
+}
+```
+- JWT Required: Yes
+
+<br>
+
+8. Delete Submission by id
+
+- Endpoint: /submissions/{submission id}
+- Method: DELETE
+- Headers: ``JWT Token``
+- Response (JSON):
+```json
+{
+  "message": "Submission deleted successfully"
 }
 ```
 - JWT Required: Yes

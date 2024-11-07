@@ -53,6 +53,20 @@ db = SQLAlchemy()
 bcrypt = Bcrypt()
 jwt = JWTManager()
 
+# Get environment variables
+SERVICE_DISCOVERY_URL = os.getenv('SERVICE_DISCOVERY_URL', 'http://service_discovery:9000')
+
+def register_service():
+    service_data = {
+        "service_name": "competition_service",
+        "service_url": "http://competition_service:5001"
+    }
+    try:
+        response = requests.post("http://service_discovery:9000/register", json=service_data)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Error registering service: {e}")
+
 # Redis client
 redis_client = redis.StrictRedis(host='redis', port=6379, db=0)
 
@@ -119,4 +133,5 @@ def start_websocket_server():
 threading.Thread(target=start_websocket_server, daemon=True).start()
 
 if __name__ == "__main__":
+    rregister_service()
     app.run(host="0.0.0.0", port=5001, debug=True)

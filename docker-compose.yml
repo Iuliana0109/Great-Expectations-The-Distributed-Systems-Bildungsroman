@@ -68,9 +68,26 @@ services:
     depends_on:
       - user_management_service
       - competition_service
+    links:
+      - user_management_service
+      - competition_service
       - redis
     networks:
       - app-network
+
+  # service_discovery:
+  #   build:
+  #     context: ./service_discovery
+  #     dockerfile: Dockerfile
+  #   container_name: service_discovery
+  #   ports:
+  #     - "9000:9000" 
+  #   environment:
+  #     - PORT=9000
+  #   depends_on:
+  #     - user_management_service
+  #     - competition_service
+  #   restart: unless-stopped
 
   postgres_user_management:
     image: postgres:13

@@ -1,0 +1,552 @@
+{
+	"info": {
+		"_postman_id": "fbd4e689-d921-4ef9-9df0-ef6e3620d399",
+		"name": "postman",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38619092"
+	},
+	"item": [
+		{
+			"name": "Create Competition",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyOTE3NTY0MiwianRpIjoiYTdiZjQxYWItMzM1My00MmIyLWIxMWEtZTk3ZGMyMjE4YzZmIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjYwNzA5N2Q5LTBkMWItNGRhNC1hNTk0LWEzOTUwMGI2MmIwMiIsIm5iZiI6MTcyOTE3NTY0MiwiZXhwIjoxNzI5MTc5MjQyfQ.evt8Ne9FFyxSpV_BURpifhJtc-Qt_jhXBBXBguELCEI",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"Test\",\r\n    \"description\": \"A competition to showcase writing skills.\",\r\n    \"start_date\": \"2024-10-01\",\r\n    \"end_date\": \"2024-10-31\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5001/competitions",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"competitions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Competitions",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5001/competitions",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"competitions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Competition by ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5001/competitions/482d08ae-551c-4e58-82cf-7202d3dd262a",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"competitions",
+						"482d08ae-551c-4e58-82cf-7202d3dd262a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Submit entry",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyOTE5OTk2NSwianRpIjoiYTIyZDgzZTQtMjczYi00MjFlLTg0ZTMtNTQ0MWJhNmQ3MzJiIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjYwNzA5N2Q5LTBkMWItNGRhNC1hNTk0LWEzOTUwMGI2MmIwMiIsIm5iZiI6MTcyOTE5OTk2NSwiZXhwIjoxNzI5MjAzNTY1fQ.0Ic-glNv6K2GR29bVPjhefzu1lM30jjZgXnrERoR7IE",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"title\": \"Another Essay\",\r\n  \"content\": \"This is the content of my submission for the competition.\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5001/competitions/482d08ae-551c-4e58-82cf-7202d3dd262a/submit",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"competitions",
+						"482d08ae-551c-4e58-82cf-7202d3dd262a",
+						"submit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Submission by ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5001/submissions/2ee4bb18-068d-40c6-b1cb-9c19f83b4683",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"submissions",
+						"2ee4bb18-068d-40c6-b1cb-9c19f83b4683"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Like a submission",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyOTIwMjU4MSwianRpIjoiNmIzNzE0MzEtYzk1MS00NDhhLWJhM2UtNDA1N2VlZWQzMTAzIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjYwNzA5N2Q5LTBkMWItNGRhNC1hNTk0LWEzOTUwMGI2MmIwMiIsIm5iZiI6MTcyOTIwMjU4MSwiZXhwIjoxNzI5MjA2MTgxfQ.2cvPTXp52en9_xqnz-CylD3yu1bY_6piTJjxCTyp6zg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5001/competitions/482d08ae-551c-4e58-82cf-7202d3dd262a/like/2ee4bb18-068d-40c6-b1cb-9c19f83b4683",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"competitions",
+						"482d08ae-551c-4e58-82cf-7202d3dd262a",
+						"like",
+						"2ee4bb18-068d-40c6-b1cb-9c19f83b4683"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Comment a submission",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyOTE3ODIyNiwianRpIjoiOWUxYzVlYzEtNTg4ZS00MjQ3LWFiOGItNThlMWJiYzc5NGZhIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjYwNzA5N2Q5LTBkMWItNGRhNC1hNTk0LWEzOTUwMGI2MmIwMiIsIm5iZiI6MTcyOTE3ODIyNiwiZXhwIjoxNzI5MTgxODI2fQ.v9R8hCAspXK08sdYNgkE1YXttN5zb68gt9lm3AcsSL8",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"content\": \"This is a sample comment\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5001/competitions/482d08ae-551c-4e58-82cf-7202d3dd262a/comment/2ee4bb18-068d-40c6-b1cb-9c19f83b4683",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"competitions",
+						"482d08ae-551c-4e58-82cf-7202d3dd262a",
+						"comment",
+						"2ee4bb18-068d-40c6-b1cb-9c19f83b4683"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Competition",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyOTE4MjU2MSwianRpIjoiYTFiYjhkZDctYzBlZS00NDE4LWE5YzAtOWI5NzQzNmMwZjdhIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjYwNzA5N2Q5LTBkMWItNGRhNC1hNTk0LWEzOTUwMGI2MmIwMiIsIm5iZiI6MTcyOTE4MjU2MSwiZXhwIjoxNzI5MTg2MTYxfQ.edQARFRKIWDzessEBvZxEwcMCn0PtGRiYmucR7_ccso",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5001/competitions/93fdfb2a-92da-4feb-a524-056952f18144",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"competitions",
+						"93fdfb2a-92da-4feb-a524-056952f18144"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete submission by ID",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyOTE4MjU2MSwianRpIjoiYTFiYjhkZDctYzBlZS00NDE4LWE5YzAtOWI5NzQzNmMwZjdhIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjYwNzA5N2Q5LTBkMWItNGRhNC1hNTk0LWEzOTUwMGI2MmIwMiIsIm5iZiI6MTcyOTE4MjU2MSwiZXhwIjoxNzI5MTg2MTYxfQ.edQARFRKIWDzessEBvZxEwcMCn0PtGRiYmucR7_ccso",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5001/submissions/a004eeae-3e3b-4b87-bb0b-957d0fea114a",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"submissions",
+						"a004eeae-3e3b-4b87-bb0b-957d0fea114a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get services",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Register User",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"ina\",\r\n    \"email\": \"ina@example.com\",\r\n    \"password\": \"password123\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/users/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"users",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login User",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\": \"julia@example.com\",\r\n    \"password\": \"password123\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/users/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"users",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Profile",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyOTE2OTY5NSwianRpIjoiNDgxODE5N2UtYWI2Mi00ZTdkLWFjMmYtOTczOTQ3OTY5ZDQ4IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjE4YWExNGI3LWMwYjgtNGU0My1hM2E5LTZjMDZlODBlODAyNCIsIm5iZiI6MTcyOTE2OTY5NSwiZXhwIjoxNzI5MTczMjk1fQ.OexICDnqGc71LRBiKr16tEiR7_zB9m1ldj9bjBsVXL8",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/users/profile",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"users",
+						"profile"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test DB",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/test-db",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"test-db"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Subscriptions",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyOTE5ODY1NSwianRpIjoiNTMxYWFmNWMtYzUxOC00ZTgxLWEyZDQtZDQ4MDI3MmM4NGMwIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjYwNzA5N2Q5LTBkMWItNGRhNC1hNTk0LWEzOTUwMGI2MmIwMiIsIm5iZiI6MTcyOTE5ODY1NSwiZXhwIjoxNzI5MjAyMjU1fQ.MAFWuXG7etUBa8JEzqu9C9XMe0gJq6CfKTJtweFIo0s",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/users/subscriptions",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"users",
+						"subscriptions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Subscribe to a competition",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyOTE5OTk2NSwianRpIjoiYTIyZDgzZTQtMjczYi00MjFlLTg0ZTMtNTQ0MWJhNmQ3MzJiIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjYwNzA5N2Q5LTBkMWItNGRhNC1hNTk0LWEzOTUwMGI2MmIwMiIsIm5iZiI6MTcyOTE5OTk2NSwiZXhwIjoxNzI5MjAzNTY1fQ.0Ic-glNv6K2GR29bVPjhefzu1lM30jjZgXnrERoR7IE",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/users/subscribe/482d08ae-551c-4e58-82cf-7202d3dd262a",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"users",
+						"subscribe",
+						"482d08ae-551c-4e58-82cf-7202d3dd262a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete User",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyOTE2OTYxNywianRpIjoiMzYyYTk1ZDgtZTMyNS00NGJlLTgzMDgtNjY3MDQxZjk2Y2UxIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6ImI3ZWUwNjk1LTdjZTEtNDFlNi1hYTkyLTNmMzZkNGQ0NGZjYyIsIm5iZiI6MTcyOTE2OTYxNywiZXhwIjoxNzI5MTczMjE3fQ.2Wk7Sco6D53KrT1twwjDv5R_MkqKnu9cwPvKOaAHVnk",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/users/delete",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"users",
+						"delete"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Status Endpoint",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/status",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"status"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
