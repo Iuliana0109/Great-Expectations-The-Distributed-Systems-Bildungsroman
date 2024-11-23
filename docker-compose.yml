@@ -1,52 +1,180 @@
-version: '3'
+# version: '3'
+# services:
+#   competition_service:
+#     build: ./competition_service
+#     ports:
+#       - "5001:5001"
+#       - "6480:6480"
+#     env_file:
+#       - ./competition_service/.env
+#     container_name: competition_service
+#     depends_on:
+#       - postgres_competition
+#       - user_management_service
+#     command: gunicorn -b 0.0.0.0:5001 app:app --workers 4 --threads 2 --worker-connections 100 --timeout 30
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:5001/status"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+#       start_period: 5s
+#     links:
+#       - postgres_competition
+#       - user_management_service
+#     networks:
+#       - app-network
+
+#   user_management_service:
+#     build:
+#       context: ./user_management_service
+#       dockerfile: Dockerfile 
+#     ports:
+#       - "5000:5000"
+#     env_file:
+#       - ./user_management_service/.env
+#     container_name: user_management_service
+#     command: gunicorn -b 0.0.0.0:5000 app:app --workers 2 --threads 4 --worker-connections 20 --timeout 5 --worker-class gevent --log-level debug
+#     depends_on:
+#       - postgres_user_management
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:5000/status"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+#       start_period: 5s
+#     links:
+#       - postgres_user_management
+#     networks:
+#       - app-network
+
+#   redis:
+#     image: "redis:alpine"
+#     ports:
+#       - "6379:6379"
+#     networks:
+#       - app-network
+
+#   gateway:
+#     image: gateway_service:latest
+#     build:
+#       context: ./gateway
+#     container_name: gateway
+#     ports:
+#       - "8080:8080"
+#     environment:
+#       - USER_SERVICE_URL=http://user_management_service:5000
+#       - COMPETITION_SERVICE_URL=http://competition_service:5001
+#       - REDIS_URL=redis://redis:6379
+#     depends_on:
+#       - user_management_service
+#       - competition_service
+#     links:
+#       - user_management_service
+#       - competition_service
+#       - redis
+#     networks:
+#       - app-network
+
+#   postgres_user_management:
+#     image: postgres:13
+#     environment:
+#       POSTGRES_USER: user
+#       POSTGRES_PASSWORD: password
+#       POSTGRES_DB: UserManagement
+#     networks:
+#       - app-network
+#     ports:
+#       - "5434:5432"
+#     volumes:
+#       - postgres_user_data:/var/lib/postgresql/data
+    
+#   postgres_competition:
+#     image: postgres:13
+#     environment:
+#       POSTGRES_USER: user
+#       POSTGRES_PASSWORD: password
+#       POSTGRES_DB: CompetitionDB
+#     networks:
+#       - app-network
+#     ports:
+#       - "5435:5432"
+#     volumes:
+#       - postgres_competition_data:/var/lib/postgresql/data
+
+# volumes:
+#   postgres_user_data:
+#   postgres_competition_data:
+
+# networks:
+#   app-network:
+#     driver: bridge
+
+version: '3.8'
+
 services:
-  competition_service:
+  # Competition Service - Replica 1
+  competition_service1:
     build: ./competition_service
     ports:
-      - "5001:5001"
-      - "6480:6480"
+      - "5001:5000"
     env_file:
       - ./competition_service/.env
-    container_name: competition_service
-    depends_on:
-      - postgres_competition
-      - user_management_service
-    command: gunicorn -b 0.0.0.0:5001 app:app --workers 4 --threads 2 --worker-connections 100 --timeout 30
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
-    links:
-      - postgres_competition
-      - user_management_service
+    container_name: competition_service1
     networks:
       - app-network
+    depends_on:
+      - postgres_competition
+      - user_management_service1
+    command: gunicorn -b 0.0.0.0:5000 app:app --workers 4 --threads 2 --worker-connections 100 --timeout 30
 
-  user_management_service:
+  # Competition Service - Replica 2
+  competition_service2:
+    build: ./competition_service
+    ports:
+      - "5002:5000"
+    env_file:
+      - ./competition_service/.env
+    container_name: competition_service2
+    networks:
+      - app-network
+    depends_on:
+      - postgres_competition
+      - user_management_service2
+    command: gunicorn -b 0.0.0.0:5000 app:app --workers 4 --threads 2 --worker-connections 100 --timeout 30
+
+  # User Management Service - Replica 1
+  user_management_service1:
     build:
       context: ./user_management_service
       dockerfile: Dockerfile 
     ports:
-      - "5000:5000"
+      - "5003:5000"
     env_file:
       - ./user_management_service/.env
-    container_name: user_management_service
-    command: gunicorn -b 0.0.0.0:5000 app:app --workers 2 --threads 4 --worker-connections 20 --timeout 5 --worker-class gevent --log-level debug
-    depends_on:
-      - postgres_user_management
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
-    links:
-      - postgres_user_management
+    container_name: user_management_service1
     networks:
       - app-network
+    depends_on:
+      - postgres_user_management
+    command: gunicorn -b 0.0.0.0:5000 app:app --workers 2 --threads 4 --worker-connections 20 --timeout 5 --worker-class gevent --log-level debug
 
+  # User Management Service - Replica 2
+  user_management_service2:
+    build:
+      context: ./user_management_service
+      dockerfile: Dockerfile 
+    ports:
+      - "5004:5000"
+    env_file:
+      - ./user_management_service/.env
+    container_name: user_management_service2
+    networks:
+      - app-network
+    depends_on:
+      - postgres_user_management
+    command: gunicorn -b 0.0.0.0:5000 app:app --workers 2 --threads 4 --worker-connections 20 --timeout 5 --worker-class gevent --log-level debug
+
+  # Redis
   redis:
     image: "redis:alpine"
     ports:
@@ -54,27 +182,48 @@ services:
     networks:
       - app-network
 
+  # Gateway
   gateway:
-    image: gateway_service:latest
-    build:
-      context: ./gateway
-    container_name: gateway
+    build: ./gateway
     ports:
       - "8080:8080"
     environment:
-      - USER_SERVICE_URL=http://user_management_service:5000
-      - COMPETITION_SERVICE_URL=http://competition_service:5001
+      - USER_SERVICE_URL=http://nginx_user_management
+      - COMPETITION_SERVICE_URL=http://nginx_competition
       - REDIS_URL=redis://redis:6379
     depends_on:
-      - user_management_service
-      - competition_service
-    links:
-      - user_management_service
-      - competition_service
-      - redis
+      - nginx_user_management
+      - nginx_competition
     networks:
       - app-network
 
+  # Nginx for Load Balancing User Management Services
+  nginx_user_management:
+    image: nginx:latest
+    ports:
+      - "5005:80"
+    volumes:
+      - ./nginx_user_management.conf:/etc/nginx/nginx.conf
+    networks:
+      - app-network
+    depends_on:
+      - user_management_service1
+      - user_management_service2
+
+  # Nginx for Load Balancing Competition Services
+  nginx_competition:
+    image: nginx:latest
+    ports:
+      - "5006:80"
+    volumes:
+      - ./nginx_competition.conf:/etc/nginx/nginx.conf
+    networks:
+      - app-network
+    depends_on:
+      - competition_service1
+      - competition_service2
+
+  # PostgreSQL for User Management
   postgres_user_management:
     image: postgres:13
     environment:
@@ -83,11 +232,10 @@ services:
       POSTGRES_DB: UserManagement
     networks:
       - app-network
-    ports:
-      - "5434:5432"
     volumes:
       - postgres_user_data:/var/lib/postgresql/data
-    
+
+  # PostgreSQL for Competition
   postgres_competition:
     image: postgres:13
     environment:
@@ -96,8 +244,6 @@ services:
       POSTGRES_DB: CompetitionDB
     networks:
       - app-network
-    ports:
-      - "5435:5432"
     volumes:
       - postgres_competition_data:/var/lib/postgresql/data
 
