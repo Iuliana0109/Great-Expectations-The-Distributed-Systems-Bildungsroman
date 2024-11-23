@@ -1,9 +1,9 @@
-// Import necessary libraries
 const express = require('express');
 const axios = require('axios');
 const morgan = require('morgan');
 const cors = require('cors');
 const redis = require('redis');
+const opossum = require('opossum'); // circuitt breaker
 require('dotenv').config();
 
 const app = express();
@@ -23,65 +23,159 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-async function handleServiceRequest(serviceUrl, req, res) {
+// Circuit Breaker Options
+const circuitBreakerOptions = {
+    timeout: 2000,
+    errorThresholdPercentage: 20,
+    resetTimeout: 15000,
+};
+
+// Create Circuit Breakers for each service
+const userServiceBreaker = new opossum(async (reqConfig) => {
+    const response = await axios(reqConfig);
+    return response.data;
+}, circuitBreakerOptions);
+
+const competitionServiceBreaker = new opossum(async (reqConfig) => {
+    const response = await axios(reqConfig);
+    return response.data;
+}, circuitBreakerOptions);
+
+// Utility function to route through the circuit breaker
+async function routeThroughCircuitBreaker(breaker, req, serviceUrl) {
+    const reqConfig = {
+        method: req.method,
+        url: `${serviceUrl}${req.url}`,
+        data: req.body,
+        headers: {
+            'Content-Type': req.headers['content-type'] || 'application/json',
+            'Authorization': req.headers['authorization'] || '',
+        },
+    };
+
     try {
-        console.log(`Forwarding request to: ${serviceUrl}${req.url}`);
-        const response = await axios({
-            method: req.method,
-            url: `${serviceUrl}${req.url}`,
-            data: req.body,
-            headers: {
-                'Content-Type': req.headers['content-type'] || 'application/json',
-                'Authorization': req.headers['authorization'] || ''
-            },
-            timeout: 5000
-        });
-        res.status(response.status).send(response.data);
+        // Attempt to fire the circuit breaker
+        return await breaker.fire(reqConfig);
     } catch (error) {
-        console.error(`Error forwarding request: ${error.message}`);
-        const status = error.response ? error.response.status : 500;
-        const message = error.response?.data?.error || 'Something went wrong. Please try again later.';
-        res.status(status).send({ error: message });
+        console.error(`Failure captured by circuit breaker: ${error.message}`);
+
+        // Track the reroute
+        trackReroute();
+
+        // Throw the error to continue handling it
+        throw new Error('Service Unavailable');
     }
 }
 
-// Routes: Forwarding to User Management Service
-app.all('/user/*', (req, res) => {
-    const modifiedUrl = req.url.replace('/user', ''); 
-    handleServiceRequest(USER_SERVICE_URL, { ...req, url: modifiedUrl }, res);
+
+// Handle Circuit Breaker Events
+[userServiceBreaker, competitionServiceBreaker].forEach((breaker, index) => {
+    const serviceName = index === 0 ? "User Service" : "Competition Service";
+
+    breaker.on('open', () => {
+        console.error(`Circuit breaker for ${serviceName} is now OPEN`);
+    });
+
+    breaker.on('halfOpen', () => {
+        console.log(`Circuit breaker for ${serviceName} is now HALF-OPEN`);
+    });
+
+    breaker.on('close', () => {
+        console.log(`Circuit breaker for ${serviceName} is now CLOSED`);
+    });
+
+    breaker.on('failure', (error) => {
+        console.error(`Circuit breaker for ${serviceName} recorded a FAILURE: ${error.message}`);
+    });
+
+    breaker.on('success', () => {
+        console.log(`Circuit breaker for ${serviceName} recorded a SUCCESS`);
+    });
 });
+
+// Routes: Forwarding to User Management Service
+app.all('/user/*', async (req, res) => {
+    try {
+        // Remove '/user' from the forwarded path
+        req.url = req.url.replace('/user', '');
+        const result = await routeThroughCircuitBreaker(userServiceBreaker, req, USER_SERVICE_URL);
+        res.status(200).send(result);
+    } catch (error) {
+        console.error(`User service error: ${error.message}`);
+        res.status(503).send({ error: 'User service is unavailable. Please try again later.' });
+    }
+});
+
 
 // Routes: Forwarding to Competition Service
 app.all('/competition/*', async (req, res) => {
-    const modifiedUrl = req.url.replace('/competition', ''); // Remove '/competition' from the path
-
-    if (req.method === 'GET' && modifiedUrl === '/active') {
-        try {
-            // Handle caching for GET /competition/active
-            const cachedCompetitions = await redisClient.get('activeCompetitions');
-            if (cachedCompetitions) {
-                console.log('Cache hit for active competitions');
-                return res.status(200).send(JSON.parse(cachedCompetitions));
-            }
-
-            console.log('Cache miss for active competitions');
-            const response = await axios.get(`${COMPETITION_SERVICE_URL}/competitions`);
-            const activeCompetitions = response.data;
-
-            await redisClient.setEx('activeCompetitions', 3600, JSON.stringify(activeCompetitions));
-            return res.status(response.status).send(activeCompetitions);
-        } catch (error) {
-            console.error(`Error forwarding request: ${error.message}`);
-            const status = error.response ? error.response.status : 500;
-            const message = error.response?.data?.error || 'Something went wrong. Please try again later.';
-            return res.status(status).send({ error: message });
-        }
-    } else {
-        // Remove the incorrect use of `{ ...req, url: modifiedUrl }` which might be causing issues.
-        req.url = modifiedUrl; // Correct the URL path
-        handleServiceRequest(COMPETITION_SERVICE_URL, req, res);
+    try {
+        // Remove '/competition' from the forwarded path
+        req.url = req.url.replace('/competition', '');
+        const result = await routeThroughCircuitBreaker(
+            competitionServiceBreaker,
+            req,
+            COMPETITION_SERVICE_URL
+        );
+        res.status(200).send(result);
+    } catch (error) {
+        console.error(`Competition service error: ${error.message}`);
+        res.status(503).send({ error: 'Competition service is unavailable. Please try again later.' });
     }
 });
+
+// Initialize counters
+let competitionFailures = 0;
+let competitionSuccesses = 0;
+
+competitionServiceBreaker.on('failure', (error) => {
+    competitionFailures++;
+    console.error(`Circuit breaker for Competition Service recorded a FAILURE: ${error.message}`);
+});
+
+competitionServiceBreaker.on('success', () => {
+    competitionSuccesses++;
+    console.log(`Circuit breaker for Competition Service recorded a SUCCESS`);
+});
+
+
+app.get('/breaker-status', (req, res) => {
+    res.json({
+        competitionServiceBreaker: {
+            state: competitionServiceBreaker.opened ? 'OPEN' : competitionServiceBreaker.pendingClose ? 'HALF-OPEN' : 'CLOSED',
+            failureCount: competitionServiceBreaker.stats.failures,
+            successCount: competitionServiceBreaker.stats.successes,
+            rerouteCount,
+        },
+        userServiceBreaker: {
+            state: userServiceBreaker.opened ? 'OPEN' : userServiceBreaker.pendingClose ? 'HALF-OPEN' : 'CLOSED',
+            failureCount: 0,
+            successCount: 0,
+        },
+    });
+});
+
+
+// Reroute tracking
+let rerouteCount = 0;
+const rerouteThreshold = 5; // Trip breaker after 5 reroutes
+const rerouteWindowMs = 5000; // Time window for counting reroutes (5 seconds)
+
+// Reset reroute count periodically
+setInterval(() => {
+    rerouteCount = 0; // Reset the counter every 5 seconds
+}, rerouteWindowMs);
+
+// Utility to track reroutes
+function trackReroute() {
+    rerouteCount++;
+    console.log(`Reroute occurred. Total reroutes in current window: ${rerouteCount}`);
+    if (rerouteCount >= rerouteThreshold) {
+        competitionServiceBreaker.open(); // Force trip the circuit breaker
+        console.error(`Circuit breaker for Competition Service is tripped due to multiple reroutes`);
+    }
+}
+
 
 // Start the Gateway
 const PORT = process.env.PORT || 8080;
